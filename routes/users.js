@@ -1,16 +1,23 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";   // ✅ added for email sending
-import otpGenerator from "otp-generator"; // ✅ added for OTP creation
+import nodemailer from "nodemailer";   // ✅ for sending OTP via Gmail
+import otpGenerator from "otp-generator"; // ✅ for generating OTP
 import User from "../models/User.js";
-import Otp from "../models/Otp.js"; // ✅ new OTP model import
+import Otp from "../models/Otp.js"; // ✅ OTP model
 
 const router = express.Router();
 
-// =============================
+// ===================================================
+// ✅ TEST ROUTE (for checking route is working)
+// ===================================================
+router.get("/test", (req, res) => {
+  res.send("✅ Users route working fine!");
+});
+
+// ===================================================
 // 📩 SEND OTP to Email
-// =============================
+// ===================================================
 router.post("/send-otp", async (req, res) => {
   try {
     const { email } = req.body;
@@ -52,9 +59,9 @@ router.post("/send-otp", async (req, res) => {
   }
 });
 
-// =============================
+// ===================================================
 // ✅ VERIFY OTP
-// =============================
+// ===================================================
 router.post("/verify-otp", async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -64,7 +71,7 @@ router.post("/verify-otp", async (req, res) => {
       return res.status(400).json({ message: "Invalid or expired OTP!" });
     }
 
-    // OTP verified → delete all previous OTPs for this email
+    // OTP verified → delete previous OTPs
     await Otp.deleteMany({ email });
 
     res.json({ message: "✅ OTP verified successfully!" });
@@ -73,15 +80,16 @@ router.post("/verify-otp", async (req, res) => {
   }
 });
 
-// =============================
-// 📝 Register Route
-// =============================
+// ===================================================
+// 📝 REGISTER USER
+// ===================================================
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
+
     const existingUser = await User.findOne({ email });
     if (existingUser)
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: "User already exists!" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -92,30 +100,36 @@ router.post("/register", async (req, res) => {
     });
 
     await newUser.save();
-    res.json({ message: "Registration successful 🎉" });
+    res.json({ message: "🎉 Registration successful!" });
   } catch (err) {
+    console.error("❌ Registration Error:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// =============================
-// 🔐 Login Route
-// =============================
-router.post("/verify-otp", async (req, res) => {
+// ===================================================
+// 🔐 LOGIN USER (Password-based)
+// ===================================================
+router.post("/login", async (req, res) => {
   try {
-    const { email, otp } = req.body;
-    const validOtp = await Otp.findOne({ email, otp });
+    const { email, password } = req.body;
 
-    if (!validOtp) {
-      return res.status(400).json({ message: "Invalid or expired OTP!" });
-    }
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: "User not found!" });
 
-    await Otp.deleteMany({ email });
-    res.json({ message: "✅ OTP verified successfully!" });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch)
+      return res.status(400).json({ message: "Invalid credentials!" });
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    res.json({ message: "🎉 Login successful!", token });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    console.error("❌ Login Error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
 export default router;
-
