@@ -6,6 +6,9 @@ import bookRoutes from "./routes/books.js";
 import userRoutes from "./routes/users.js";   // ✅ User Auth Routes
 import adminRoutes from "./routes/admin.js";  // ✅ Admin Panel Routes
 
+console.log("✅ All routes imported successfully!");
+
+
 // ========================
 // 🌍 ENV + DATABASE SETUP
 // ========================
