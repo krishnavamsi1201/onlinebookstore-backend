@@ -101,22 +101,19 @@ router.post("/register", async (req, res) => {
 // =============================
 // 🔐 Login Route
 // =============================
-router.post("/login", async (req, res) => {
+router.post("/verify-otp", async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found" });
+    const { email, otp } = req.body;
+    const validOtp = await Otp.findOne({ email, otp });
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (!validOtp) {
+      return res.status(400).json({ message: "Invalid or expired OTP!" });
+    }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
-    res.json({ message: "Login successful 🎉", token });
+    await Otp.deleteMany({ email });
+    res.json({ message: "✅ OTP verified successfully!" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
