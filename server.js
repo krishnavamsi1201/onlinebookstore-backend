@@ -31,4 +31,10 @@ app.get("/", (req, res) => res.send("📚 Online Bookstore Backend Running"));
 app.listen(process.env.PORT || 5000, () =>
   console.log(`🚀 Server running on port ${process.env.PORT}`)
 );
+// ========================
+// 🏠 DEFAULT ROUTE
+// ========================
+app.get("/", (req, res) => {
+  res.send("📚 Online Bookstore Backend Running Successfully!");
+});
 
