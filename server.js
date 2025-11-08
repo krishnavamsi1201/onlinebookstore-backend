@@ -23,7 +23,8 @@ app.use(express.json());
 // 📚 API ROUTES
 // ========================
 app.use("/api/books", bookRoutes);   // Book-related routes
-app.use("/api/users", userRoutes);   // User login/register/OTP routes
+app.use("/api/users", userRoutes);
+   // User login/register/OTP routes
 app.use("/api/admin", adminRoutes);  // Admin routes
 
 // ========================
